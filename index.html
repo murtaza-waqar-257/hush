@@ -254,11 +254,21 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;
 <script>
 document.getElementById('signup').addEventListener('submit',function(e){
   e.preventDefault();
-  var ok=['name','biz','phone'].every(function(id){return document.getElementById(id).value.trim()});
-  document.getElementById('err').hidden=ok;
-  if(!ok)return;
-  document.getElementById('formbody').hidden=true;
-  document.getElementById('done').hidden=false;
+  var err=document.getElementById('err'), btn=this.querySelector('button');
+  var v=function(id){return document.getElementById(id).value.trim()};
+  if(!v('name')||!v('biz')||!v('phone')){err.textContent='Fill in your name, business and mobile so I can reach you.';err.hidden=false;return;}
+  err.hidden=true; btn.disabled=true; btn.textContent='Sending…';
+  fetch('https://formsubmit.co/ajax/murtaza@waqar.co',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({_subject:'New Hush trial sign-up: '+v('biz'),_template:'table',_captcha:'false',
+      Name:v('name'),Business:v('biz'),Mobile:v('phone'),'Missed calls per week':v('calls')})
+  }).then(function(r){if(!r.ok)throw 0;
+    document.getElementById('formbody').hidden=true;document.getElementById('done').hidden=false;
+  }).catch(function(){
+    btn.disabled=false;btn.textContent='Send';
+    err.textContent='That didn\'t send. Check your connection and try again.';err.hidden=false;
+  });
 });
 </script>
 </body>
