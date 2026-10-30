@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Hush is an AI receptionist for pest control businesses. Every call answered, even at 2am.">
+<title>Hush</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: quiet single column, one loud moment — a live call card in the hero; calm stone paper, deep pine ink, a single dusk-amber accent */
+:root{
+  --bg:#eceee9; --surface:#f7f8f5; --ink:#14201b; --muted:#5d6862; --line:#d3d8d1;
+  --accent:#b8741f; --accent-ink:#ffffff; --ai:#1f4a3a; --ai-soft:#dfe8e2;
+  --display:"Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --body:"Figtree", "Helvetica Neue", Arial, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1512; --surface:#16201b; --ink:#e8ece7; --muted:#97a39c; --line:#26332d;
+  --accent:#e0a14f; --accent-ink:#14100a; --ai:#9ed1b9; --ai-soft:#1c2d25; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1512; --surface:#16201b; --ink:#e8ece7; --muted:#97a39c; --line:#26332d;
+  --accent:#e0a14f; --accent-ink:#14100a; --ai:#9ed1b9; --ai-soft:#1c2d25; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-0.02em}
+p{margin:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+/* nav */
+nav .wrap{display:flex;align-items:center;justify-content:space-between;padding-block:22px}
+.logo{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-0.04em;display:flex;align-items:baseline;gap:2px}
+.logo i{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
+.navcta{font-weight:600;font-size:15px;text-decoration:none;border-bottom:1.5px solid var(--accent);padding-bottom:2px}
+
+/* hero */
+.hero .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center;padding-block:40px 80px}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hero h1{font-size:clamp(46px,7.4vw,88px);line-height:.96;font-weight:800;margin-top:18px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.lede{margin-top:24px;font-size:19px;color:var(--muted);max-width:30em}
+.ctas{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:32px}
+.btn{font:600 16px var(--body);background:var(--ink);color:var(--bg);border:0;border-radius:999px;padding:15px 26px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--ai)}
+.btn.amber{background:var(--accent);color:var(--accent-ink)}
+.small{font-size:14px;color:var(--muted)}
+
+/* call card */
+.call{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 30px 60px -30px rgba(20,32,27,.35);min-width:0}
+.callhead{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12.5px;color:var(--muted);padding-bottom:14px;border-bottom:1px dashed var(--line)}
+.live{display:flex;align-items:center;gap:8px;color:var(--ai);font-weight:500}
+.live b{width:8px;height:8px;border-radius:50%;background:var(--ai);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.lines{display:flex;flex-direction:column;gap:12px;padding-top:16px}
+.ln{max-width:88%;padding:11px 15px;border-radius:16px;font-size:15.5px;line-height:1.45}
+.ln small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;margin-bottom:3px}
+.ln.c{background:transparent;border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
+.ln.h{background:var(--ai-soft);color:var(--ink);align-self:flex-end;border-bottom-right-radius:4px}
+.ln.h small{color:var(--ai)}
+.booked{margin-top:16px;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-family:var(--mono);font-size:13px;background:var(--bg);border-radius:12px;padding:14px 16px}
+.booked dt{color:var(--muted)} .booked dd{margin:0;font-weight:500}
+
+/* sections */
+section{padding-block:84px;border-top:1px solid var(--line)}
+section h2{font-size:clamp(32px,4.6vw,52px);line-height:1.02;font-weight:800;max-width:16em}
+.intro{margin-top:18px;color:var(--muted);max-width:36em;font-size:18px}
+
+/* missed calls: phone recents list */
+.recents{margin-top:40px;max-width:560px;--miss:#d1453b}
+.rhead{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;border-bottom:1px solid var(--ink)}
+.rhead span:first-child{font-family:var(--display);font-weight:800;font-size:28px}
+.rcount{font-family:var(--mono);font-size:13px;color:var(--miss)}
+.row{display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:center;padding-block:14px;border-bottom:1px solid var(--line)}
+.ic{color:var(--miss);font-size:15px}
+.who{display:flex;flex-direction:column;min-width:0}
+.who b{color:var(--miss);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+.who span{font-size:13.5px;color:var(--muted)}
+.row time{font-family:var(--mono);font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rnote{margin-top:18px;font-family:var(--display);font-size:20px;font-weight:600}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .recents{--miss:#ef6b60}}
+:root[data-theme="dark"] .recents{--miss:#ef6b60}
+
+/* steps */
+.steps{list-style:none;padding:0;margin:44px 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:36px}
+.steps li{display:flex;flex-direction:column;gap:10px;border-top:2px solid var(--ink);padding-top:18px}
+.steps .n{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.steps h3{font-size:24px;font-weight:600}
+.steps p{color:var(--muted);font-size:16px}
+
+/* captures */
+.caps{margin-top:40px;display:flex;flex-wrap:wrap;gap:10px}
+.caps span{font-family:var(--mono);font-size:14px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px}
+
+/* offer */
+.offer .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.offer ul{margin:24px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+.offer li{display:flex;gap:12px;align-items:baseline}
+.offer li::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--accent);transform:translateY(-2px)}
+form{min-width:0;padding-top:8px}
+.fb{display:flex;flex-direction:column;gap:28px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mad{font-family:var(--display);font-weight:600;font-size:clamp(24px,3.2vw,32px);line-height:1.9;letter-spacing:-0.01em}
+.mad input,.mad select{font:inherit;color:var(--accent);background:transparent;border:0;border-bottom:2px solid var(--line);border-radius:0;padding:0 2px;max-width:100%;vertical-align:baseline;-webkit-appearance:none;appearance:none}
+.mad select{cursor:pointer;padding-right:4px}
+.mad input::placeholder{color:var(--muted);opacity:.55}
+.mad input:focus,.mad select:focus{outline:none;border-bottom-color:var(--accent)}
+.fend{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+.spots{font-family:var(--mono);font-size:13px;color:var(--accent)}
+.done{text-align:left;display:flex;flex-direction:column;gap:10px}
+.done h3{font-size:28px}
+
+/* faq */
+.faq{margin-top:36px;display:flex;flex-direction:column}
+details{border-bottom:1px solid var(--line);padding-block:20px}
+summary{cursor:pointer;font-family:var(--display);font-weight:600;font-size:21px;list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--accent);font-weight:400}
+details[open] summary::after{content:"–"}
+details p{margin-top:10px;color:var(--muted);max-width:40em}
+
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;padding-block:36px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+
+@media (max-width:820px){
+  .hero .wrap,.offer .wrap{grid-template-columns:1fr;gap:40px}
+  .steps{grid-template-columns:1fr;gap:28px}
+  section{padding-block:64px}
+}
+@media (prefers-reduced-motion:reduce){.live b{animation:none}}
+</style>
+<style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="logo">hush<i></i></div>
+  <a class="navcta" href="#trial">Free trial</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div>
+    <div class="eyebrow">AI receptionist for pest control</div>
+    <h1>Every call answered. <em>Even at 2am.</em></h1>
+    <p class="lede">While you're up a ladder with a wasp nest, Hush picks up your phone, books the job and texts you the details. Callers get a calm, friendly voice instead of voicemail.</p>
+    <div class="ctas">
+      <a class="btn amber" href="#trial">Try it free for 7 days</a>
+      <span class="small">No card. Just honest feedback.</span>
+    </div>
+  </div>
+
+  <div class="call" aria-label="Example call handled by Hush">
+    <div class="callhead"><span class="live"><b></b>Hush on the line</span><span>02:07 · Thu</span></div>
+    <div class="lines">
+      <div class="ln c"><small>Caller</small>Hi, there's wasps going in and out of my loft. Can someone come out?</div>
+      <div class="ln h"><small>Hush</small>I can sort that for you. What's the postcode, and is anyone in the house allergic to stings?</div>
+      <div class="ln c"><small>Caller</small>LS6 2QT. No allergies, but I've got two kids.</div>
+      <div class="ln h"><small>Hush</small>Thanks. I've booked a technician for 8am tomorrow and sent you a confirmation text.</div>
+    </div>
+    <dl class="booked">
+      <dt>Job</dt><dd>Wasp nest, loft</dd>
+      <dt>Where</dt><dd>LS6 2QT</dd>
+      <dt>Slot</dt><dd>Fri 08:00</dd>
+      <dt>Sent to you</dt><dd>SMS summary ✓</dd>
+    </dl>
+  </div>
+</div></header>
+
+<section><div class="wrap">
+  <div class="eyebrow">The problem</div>
+  <h2>Pest calls don't wait. If you don't pick up, the next company on Google does.</h2>
+  <p class="intro">People ring about wasps, rats and bed bugs when they're stressed. Most won't leave a voicemail. They just try someone else.</p>
+  <div class="recents" aria-label="Example missed calls">
+    <div class="rhead"><span>Recents</span><span class="rcount">4 missed today</span></div>
+    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>07700 900 418</b><span>mobile · no voicemail</span></div><time>08:47</time></div>
+    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>07700 900 162</b><span>mobile · no voicemail</span></div><time>13:31</time></div>
+    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>0113 496 0275</b><span>Leeds · no voicemail</span></div><time>18:15</time></div>
+    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>07700 900 731</b><span>mobile · no voicemail</span></div><time>23:42</time></div>
+    <p class="rnote">Every one of these was a job. None of them rang back.</p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">How it works</div>
+  <h2>Set up once. Then stop worrying about the phone.</h2>
+  <ol class="steps">
+    <li><span class="n">Step 1</span><h3>Forward your calls</h3><p>Send missed or after-hours calls to your Hush number. Your customers dial the same number they always have.</p></li>
+    <li><span class="n">Step 2</span><h3>Hush picks up</h3><p>It answers in a natural voice, asks the right questions about the pest problem and books a slot.</p></li>
+    <li><span class="n">Step 3</span><h3>You get a text</h3><p>Every call ends with a short summary on your phone: who rang, where, what pest, and when you're booked in.</p></li>
+  </ol>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">On every call</div>
+  <h2>It asks what you'd ask.</h2>
+  <p class="intro">Hush is set up for pest control, so it knows which details matter before you turn up.</p>
+  <div class="caps">
+    <span>Name &amp; number</span><span>Address &amp; postcode</span><span>Type of pest</span><span>Where it is (loft, kitchen, garden)</span><span>How long it's been going on</span><span>Kids, pets or allergies</span><span>Residential or commercial</span><span>Best time to visit</span>
+  </div>
+</div></section>
+
+<section class="offer" id="trial"><div class="wrap">
+  <div>
+    <div class="eyebrow">Free trial</div>
+    <h2>Looking for 5 pest control firms to test Hush.</h2>
+    <p class="intro">Use it free for a week on your real calls. In return, tell me what works and what doesn't.</p>
+    <ul>
+      <li>Free for 7 days, no card needed</li>
+      <li>Set up for your business and your services</li>
+      <li>Turn it off any time</li>
+    </ul>
+  </div>
+
+  <form id="signup" novalidate>
+    <div id="formbody" class="fb">
+      <p class="mad">
+        Hi, I'm <label class="sr" for="name">Your name</label><input id="name" name="name" required placeholder="your name" autocomplete="name" style="width:7.5em">
+        from <label class="sr" for="biz">Business name</label><input id="biz" name="biz" required placeholder="business name" autocomplete="organization" style="width:10em">.
+        I miss about <label class="sr" for="calls">Calls missed per week</label><select id="calls" name="calls"><option>a few</option><option>5 or so</option><option>10+</option><option>loads of</option></select> calls a week.
+        Text me on <label class="sr" for="phone">Mobile number</label><input id="phone" name="phone" type="tel" required placeholder="07…" autocomplete="tel" style="width:8em">.
+      </p>
+      <div class="fend">
+        <button class="btn amber" type="submit">Send</button>
+        <span class="small">I'll text you within a day.</span>
+      </div>
+      <p class="small" id="err" hidden>Fill in your name, business and mobile so I can reach you.</p>
+    </div>
+    <div class="done" id="done" hidden>
+      <span class="spots">Spot requested</span>
+      <h3>Thanks, you're on the list.</h3>
+      <p class="small">I'll text you within a day to set up your trial.</p>
+    </div>
+  </form>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow">Questions</div>
+  <h2>Before you try it</h2>
+  <div class="faq">
+    <details><summary>Will callers know it's AI?</summary><p>It sounds natural, but if someone asks, Hush tells them it's an automated assistant. Most callers just want the problem sorted.</p></details>
+    <details><summary>What about emergencies?</summary><p>You choose what counts as urgent. For those, Hush can text you straight away so you can call back fast.</p></details>
+    <details><summary>Do I need a new phone number?</summary><p>No. You forward calls from your existing number, so nothing changes for your customers.</p></details>
+    <details><summary>What happens after the free week?</summary><p>Nothing, unless you want to keep it. If you do, we'll agree a simple monthly price that fits your business.</p></details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span class="logo" style="font-size:20px">hush<i></i></span>
+  <span>Built in the UK for pest control businesses.</span>
+</div></footer>
+
+<script>
+document.getElementById('signup').addEventListener('submit',function(e){
+  e.preventDefault();
+  var ok=['name','biz','phone'].every(function(id){return document.getElementById(id).value.trim()});
+  document.getElementById('err').hidden=ok;
+  if(!ok)return;
+  document.getElementById('formbody').hidden=true;
+  document.getElementById('done').hidden=false;
+});
+</script>
+</body>
+</html>
