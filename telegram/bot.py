@@ -28,7 +28,10 @@ from telegram.constants import ChatAction
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 load_dotenv()
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler(Path(__file__).parent / "bot.log")],
+)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 log = logging.getLogger("hush")
 
