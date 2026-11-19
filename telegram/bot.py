@@ -281,9 +281,6 @@ async def _ask_loop(session: dict, messages: list) -> str:
 
 
 async def tell_owner(app: Application, text: str) -> None:
-    if OWNER_CHAT_ID == TELEGRAM_BOT_TOKEN.split(":")[0]:
-        log.warning("OWNER_CHAT_ID is the bot's own id. Use YOUR id (shown after /start). Owner message not sent:\n%s", text)
-        return
     if not OWNER_CHAT_ID.lstrip("-").isdigit():
         log.warning("OWNER_CHAT_ID must be your chat id NUMBER (not the bot's name). "
                     "Send /start and copy the number shown here. Owner message not sent:\n%s", text)
