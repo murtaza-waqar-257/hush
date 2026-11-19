@@ -17,6 +17,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -180,22 +181,85 @@ client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 chats: dict[int, dict] = {}  # chat_id -> {"chat": gemini chat, "outbox": [...]}
 
 
+def new_chat(model: str, chat_id: int, outbox: list[str], history=None):
+    return client.chats.create(
+        model=model,
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt(),
+            tools=make_tools(chat_id, outbox),  # Gemini runs these Python functions itself
+            temperature=0.3,
+        ),
+        history=history or [],
+    )
+
+
 def get_chat(chat_id: int) -> dict:
     if chat_id not in chats:
         outbox: list[str] = []
-        chat = client.chats.create(
-            model=GEMINI_MODEL,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt(),
-                tools=make_tools(chat_id, outbox),  # Gemini runs these Python functions itself
-                temperature=0.3,
-            ),
-        )
-        chats[chat_id] = {"chat": chat, "outbox": outbox}
+        chats[chat_id] = {"chat": new_chat(GEMINI_MODEL, chat_id, outbox), "outbox": outbox, "model": GEMINI_MODEL}
     return chats[chat_id]
 
 
+_backup_models: list[str] | None = None
+
+
+def backup_models() -> list[str]:
+    """Other free 'flash' models on this key, used when the main one is overloaded."""
+    global _backup_models
+    if _backup_models is None:
+        found = []
+        try:
+            for m in client.models.list():
+                name = (m.name or "").removeprefix("models/")
+                actions = getattr(m, "supported_actions", None) or []
+                if ("flash" in name and name != GEMINI_MODEL and "image" not in name and "tts" not in name
+                        and "audio" not in name and "live" not in name
+                        and (not actions or "generateContent" in actions)):
+                    found.append(name)
+        except Exception:
+            log.exception("Could not list backup models")
+        # prefer stable, newest-looking names first
+        found.sort(key=lambda n: ("preview" in n or "exp" in n, "lite" in n, n), reverse=False)
+        _backup_models = found[:3]
+        log.info("Backup models if %s is busy: %s", GEMINI_MODEL, _backup_models or "none found")
+    return _backup_models
+
+
+BUSY_CODES = ("503", "429", "500", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "INTERNAL", "overloaded", "high demand")
+
+
+def is_busy_error(e: Exception) -> bool:
+    text = f"{getattr(e, 'code', '')} {e}"
+    return any(c in text for c in BUSY_CODES)
+
+
+def ask_ai(chat_id: int, text: str):
+    """Send the message; if Google is busy, wait and retry, then try backup models."""
+    session = chats[chat_id]
+    attempts = [(session["model"], 0), (session["model"], 3)] + [(m, 0) for m in backup_models()]
+    last_error = None
+    for model, wait in attempts:
+        if wait:
+            time.sleep(wait)
+        if model != session["model"]:
+            log.warning("Switching this chat to backup model %s", model)
+            history = session["chat"].get_history()
+            session["chat"] = new_chat(model, chat_id, session["outbox"], history)
+            session["model"] = model
+        try:
+            return session["chat"].send_message(text)
+        except Exception as e:
+            if not is_busy_error(e):
+                raise
+            last_error = e
+            log.warning("%s is busy (%s), trying again", model, str(e)[:80])
+    raise last_error
+
+
 async def tell_owner(app: Application, text: str) -> None:
+    if OWNER_CHAT_ID == TELEGRAM_BOT_TOKEN.split(":")[0]:
+        log.warning("OWNER_CHAT_ID is the bot's own id. Use YOUR id (shown after /start). Owner message not sent:\n%s", text)
+        return
     if not OWNER_CHAT_ID.lstrip("-").isdigit():
         log.warning("OWNER_CHAT_ID must be your chat id NUMBER (not the bot's name). "
                     "Send /start and copy the number shown here. Owner message not sent:\n%s", text)
@@ -247,14 +311,14 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     try:
         session = get_chat(chat_id)
         outbox = session["outbox"]
-        # the Gemini call is slow and not async, so run it in a thread, and give up after 60s
-        response = await asyncio.wait_for(asyncio.to_thread(session["chat"].send_message, text), timeout=60)
+        # the Gemini call is slow and not async, so run it in a thread, and give up after 90s
+        response = await asyncio.wait_for(asyncio.to_thread(ask_ai, chat_id, text), timeout=90)
         reply = (response.text or "").strip()
         if not reply:
             log.warning("Gemini returned an empty reply: %r", response)
             reply = "Sorry, could you say that again?"
     except asyncio.TimeoutError:
-        log.error("Gemini took longer than 60 seconds")
+        log.error("Gemini took longer than 90 seconds")
         reply = "Sorry, that's taking a while. Could you send that again?"
     except Exception as e:  # e.g. wrong model name, bad key, free-tier rate limit (429)
         log.exception("Gemini error")
