@@ -1,3 +1,3 @@
 # Hush
 
-AI receptionist for pest control businesses. Every call answered, even at 2am.
+Missed-call text-back for UK pest control businesses. Hush texts back every missed call, quotes from your own prices and books the job.

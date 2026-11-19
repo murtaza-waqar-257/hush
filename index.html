@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hush – AI receptionist for pest control businesses</title>
-<meta name="description" content="Hush is an AI receptionist for UK pest control businesses. It answers every call, even at 2am, books the job and texts you the details.">
+<title>Hush – never lose a pest job to a missed call</title>
+<meta name="description" content="Hush texts back every missed call for UK pest control businesses, quotes from your own prices and books the job. You get the details on your phone.">
 <link rel="canonical" href="https://hushdesk.app/">
 <meta name="theme-color" content="#eceee9" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f1512" media="(prefers-color-scheme: dark)">
@@ -15,15 +15,15 @@
 <meta property="og:site_name" content="Hush">
 <meta property="og:locale" content="en_GB">
 <meta property="og:url" content="https://hushdesk.app/">
-<meta property="og:title" content="Hush – every call answered, even at 2am">
-<meta property="og:description" content="An AI receptionist for UK pest control businesses. It answers the phone, books the job and texts you the details.">
+<meta property="og:title" content="Hush – missed a call? Hush texts them back">
+<meta property="og:description" content="For UK pest control businesses. Hush texts back every missed call, quotes from your prices and books the job.">
 <meta property="og:image" content="https://hushdesk.app/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Hush: every call answered, even at 2am.">
+<meta property="og:image:alt" content="Hush: missed a call? Hush texts them back.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Hush – every call answered, even at 2am">
-<meta name="twitter:description" content="An AI receptionist for UK pest control businesses. It answers the phone, books the job and texts you the details.">
+<meta name="twitter:title" content="Hush – missed a call? Hush texts them back">
+<meta name="twitter:description" content="For UK pest control businesses. Hush texts back every missed call, quotes from your prices and books the job.">
 <meta name="twitter:image" content="https://hushdesk.app/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,9 +76,8 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;padding-
 /* call card */
 .call{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 30px 60px -30px rgba(20,32,27,.35);min-width:0;margin:0}
 .callhead{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12.5px;color:var(--muted);padding-bottom:14px;border-bottom:1px dashed var(--line)}
-.live{display:flex;align-items:center;gap:8px;color:var(--ai);font-weight:500}
-.live b{width:8px;height:8px;border-radius:50%;background:var(--ai);animation:pulse 1.6s infinite}
-@keyframes pulse{50%{opacity:.25}}
+.miss{color:var(--miss);font-weight:500}
+.saved{font-family:var(--mono);font-size:12.5px;color:var(--ai);white-space:nowrap}
 .lines{display:flex;flex-direction:column;gap:12px;padding-top:16px}
 .ln{max-width:88%;padding:11px 15px;border-radius:16px;font-size:15.5px;line-height:1.45}
 .ln small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;margin-bottom:3px}
@@ -160,7 +159,7 @@ footer a:hover{color:var(--ink)}
   .steps{grid-template-columns:1fr;gap:28px}
   section{padding-block:64px}
 }
-@media (prefers-reduced-motion:reduce){.live b{animation:none}.btn{transition:none}}
+@media (prefers-reduced-motion:reduce){.btn{transition:none}}
 </style>
 </head>
 <body>
@@ -173,28 +172,30 @@ footer a:hover{color:var(--ink)}
 <main>
 <header class="hero"><div class="wrap">
   <div>
-    <div class="eyebrow">AI receptionist for pest control</div>
-    <h1>Every call answered. <em>Even at 2am.</em></h1>
-    <p class="lede">While you're up a ladder with a wasp nest, Hush picks up your phone, books the job and texts you the details. Callers get a calm, friendly voice instead of voicemail.</p>
+    <div class="eyebrow">Missed-call text-back for pest control</div>
+    <h1>Missed a call? <em>Hush texts them back.</em></h1>
+    <p class="lede">While you're up a ladder with a wasp nest, Hush texts the caller within a minute, quotes from your own prices and books the job. You get the details on your phone, and the customer never rings the next company.</p>
     <div class="ctas">
       <a class="btn" href="#trial">Try it free for 7 days</a>
       <span class="small">No card. Just honest feedback.</span>
     </div>
   </div>
 
-  <figure class="call" aria-label="Example call handled by Hush">
-    <div class="callhead"><span class="live"><b></b>Hush on the line</span><span>02:07 · Thu</span></div>
+  <figure class="call" aria-label="Example text conversation handled by Hush after a missed call">
+    <div class="callhead"><span class="miss">↙ Missed call · 07700 900 418</span><span>14:12 · Tue</span></div>
     <div class="lines">
-      <div class="ln c"><small>Caller</small>Hi, there's wasps going in and out of my loft. Can someone come out?</div>
-      <div class="ln h"><small>Hush</small>I can sort that for you. What's the postcode, and is anyone in the house allergic to stings?</div>
-      <div class="ln c"><small>Caller</small>LS6 2QT. No allergies, but I've got two kids.</div>
-      <div class="ln h"><small>Hush</small>Thanks. I've booked a technician for 8am tomorrow and sent you a confirmation text.</div>
+      <div class="ln h"><small>Hush · 14:13</small>Hi, sorry we missed your call, it's Northvale Pest Control. Is it wasps, mice or something else?</div>
+      <div class="ln c"><small>Customer</small>Wasps going in and out of the roof edge</div>
+      <div class="ln h"><small>Hush</small>We can treat that for £95. Tomorrow <span style="white-space:nowrap">10–12</span> or <span style="white-space:nowrap">2–4</span>? What's your postcode?</div>
+      <div class="ln c"><small>Customer</small>10–12 please. LS6 2QT</div>
+      <div class="ln h"><small>Hush</small>Booked for Wed 10–12. Dan will text when he's on his way.</div>
     </div>
     <dl class="booked">
-      <dt>Job</dt><dd>Wasp nest, loft</dd>
+      <dt>Job</dt><dd>Wasp nest, roof edge</dd>
       <dt>Where</dt><dd>LS6 2QT</dd>
-      <dt>Slot</dt><dd>Fri 08:00</dd>
-      <dt>Sent to you</dt><dd>SMS summary ✓</dd>
+      <dt>Slot</dt><dd>Wed 10:00–12:00</dd>
+      <dt>Price</dt><dd>£95 (your price list)</dd>
+      <dt>Sent to you</dt><dd>Summary ✓</dd>
     </dl>
   </figure>
 </div></header>
@@ -202,14 +203,14 @@ footer a:hover{color:var(--ink)}
 <section aria-labelledby="problem-h"><div class="wrap">
   <div class="eyebrow">The problem</div>
   <h2 id="problem-h">Pest calls don't wait. If you don't pick up, the next company on Google does.</h2>
-  <p class="intro">People ring about wasps, rats and bed bugs when they're stressed. Most won't leave a voicemail. They just try someone else.</p>
-  <figure class="recents" aria-label="Example list of missed calls">
+  <p class="intro">People ring about wasps, rats and bed bugs when they're stressed. Most won't leave a voicemail. They just try someone else. The most common complaint in pest control reviews isn't the treatment, it's "no one called me back."</p>
+  <figure class="recents" aria-label="Example list of missed calls, each texted back by Hush">
     <div class="rhead"><span>Recents</span><span class="rcount">4 missed today</span></div>
-    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>07700 900 418</b><span>mobile · no voicemail</span></div><time>08:47</time></div>
-    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>07700 900 162</b><span>mobile · no voicemail</span></div><time>13:31</time></div>
-    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>0113 496 0275</b><span>Leeds · no voicemail</span></div><time>18:15</time></div>
-    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>07700 900 731</b><span>mobile · no voicemail</span></div><time>23:42</time></div>
-    <p class="rnote">Any one of these could have been a paying job.</p>
+    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>07700 900 418</b><span>no voicemail · <span class="saved">✓ texted back, booked £95</span></span></div><time>08:47</time></div>
+    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>07700 900 162</b><span>no voicemail · <span class="saved">✓ texted back, booked £180</span></span></div><time>13:31</time></div>
+    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>0113 496 0275</b><span>no voicemail · <span class="saved">✓ texted back, sent to you</span></span></div><time>18:15</time></div>
+    <div class="row"><span class="ic" aria-hidden="true">↙</span><div class="who"><b>07700 900 731</b><span>no voicemail · <span class="saved">✓ texted back, booked £95</span></span></div><time>23:42</time></div>
+    <p class="rnote">Four missed calls. Four replies within a minute. Three jobs booked.</p>
   </figure>
 </div></section>
 
@@ -217,16 +218,16 @@ footer a:hover{color:var(--ink)}
   <div class="eyebrow">How it works</div>
   <h2 id="how-h">Set up once. Then stop worrying about the phone.</h2>
   <ol class="steps">
-    <li><span class="n">Step 1</span><h3>Forward your calls</h3><p>Send missed or after-hours calls to your Hush number. Your customers dial the same number they always have.</p></li>
-    <li><span class="n">Step 2</span><h3>Hush picks up</h3><p>It answers in a natural voice, asks the right questions about the pest problem and books a slot.</p></li>
-    <li><span class="n">Step 3</span><h3>You get a text</h3><p>Every call ends with a short summary on your phone: who rang, where, what pest, and when you're booked in.</p></li>
+    <li><span class="n">Step 1</span><h3>You miss a call</h3><p>Up a ladder, driving, or it's 11pm. Unanswered calls go to Hush. Customers still ring the same number they always have.</p></li>
+    <li><span class="n">Step 2</span><h3>Hush texts them back</h3><p>Within a minute, from your business name. It asks what the pest is, gives a price from your own list and offers your free slots.</p></li>
+    <li><span class="n">Step 3</span><h3>The job lands with you</h3><p>You get a short summary on your phone: who, where, what pest, price and time. Anything unusual comes to you instead of being booked.</p></li>
   </ol>
 </div></section>
 
 <section aria-labelledby="asks-h"><div class="wrap">
-  <div class="eyebrow">On every call</div>
+  <div class="eyebrow">In every chat</div>
   <h2 id="asks-h">It asks what you'd ask.</h2>
-  <p class="intro">Hush is set up for pest control, so it knows which details matter before you turn up.</p>
+  <p class="intro">Hush is set up for pest control, so it knows which details matter before you turn up. It works by text, WhatsApp and a chat box on your website.</p>
   <ul class="caps">
     <li>Name &amp; number</li><li>Address &amp; postcode</li><li>Type of pest</li><li>Where it is (loft, kitchen, garden)</li><li>How long it's been going on</li><li>Kids, pets or allergies</li><li>Residential or commercial</li><li>Best time to visit</li>
   </ul>
@@ -239,7 +240,8 @@ footer a:hover{color:var(--ink)}
     <p class="intro">Use it free for a week on your real calls. In return, tell me what works and what doesn't.</p>
     <ul>
       <li>Free for 7 days, no card needed</li>
-      <li>Set up for your business and your services</li>
+      <li>Set up with your services, prices and working hours</li>
+      <li>See every chat and every booking</li>
       <li>Turn it off any time</li>
     </ul>
   </div>
@@ -275,9 +277,10 @@ footer a:hover{color:var(--ink)}
   <div class="eyebrow">Questions</div>
   <h2 id="faq-h">Before you try it</h2>
   <div class="faq">
-    <details><summary>Will callers know it's AI?</summary><p>It sounds natural, but if someone asks, Hush tells them it's an automated assistant. Most callers just want the problem sorted.</p></details>
-    <details><summary>What about emergencies?</summary><p>You choose what counts as urgent. For those, Hush can text you straight away so you can call back fast.</p></details>
-    <details><summary>Do I need a new phone number?</summary><p>No. You forward calls from your existing number, so nothing changes for your customers.</p></details>
+    <details><summary>Will customers know it's automated?</summary><p>Texts come from your business name. If someone asks, Hush says it's your automated assistant, and you can jump into any chat yourself. Most people just want a quick answer and a time.</p></details>
+    <details><summary>What if it quotes the wrong price?</summary><p>It only uses the prices you give it. Anything it isn't sure about, like a big commercial job or an unusual pest, goes to you instead of being booked.</p></details>
+    <details><summary>What about emergencies?</summary><p>You choose what counts as urgent. For those, Hush texts you straight away so you can call back fast.</p></details>
+    <details><summary>Do I need a new phone number?</summary><p>No. Your phone forwards unanswered calls to Hush, so customers still ring the number they always have.</p></details>
     <details><summary>What happens after the free week?</summary><p>Nothing, unless you want to keep it. If you do, I'll agree a simple monthly price with you that fits your business.</p></details>
   </div>
 </div></section>
