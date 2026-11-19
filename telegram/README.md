@@ -2,7 +2,7 @@
 
 A Telegram bot that acts like Hush texting back a missed call for a made-up firm, **Northvale Pest Control**.
 It asks about the pest, quotes from the price list, offers free slots, books the job and sends the owner an alert.
-Costs £0: Telegram is free and the AI uses Google Gemini's free tier.
+Telegram is free. The AI is Claude Haiku through the Claude API, which costs a fraction of a penny per chat (you add a few pounds of credit first).
 
 ## Set up (about 15 minutes, once)
 
@@ -13,9 +13,10 @@ You need Python 3.10 or newer on your Mac. Check with `python3 --version` in Ter
 - Send `/newbot`, pick a name (e.g. `Northvale Pest Control`) and a username ending in `bot` (e.g. `northvale_hush_bot`).
 - BotFather gives you a token like `123456789:ABC...`. Keep it secret.
 
-**2. Get a free Gemini key**
-- Go to https://aistudio.google.com/apikey, sign in with Google, and click **Create API key**.
-- Note: on the free tier Google may use what you send to improve its products. Only use fake demo data.
+**2. Get a Claude API key**
+- Go to https://platform.claude.com and sign in (this is separate from your Claude Pro plan).
+- Add a little credit under **Billing** (£5 lasts thousands of test chats with Haiku).
+- Go to **Settings → API keys**, click **Create key**, and copy it. It starts with `sk-ant-`.
 
 **3. Install and add your keys**
 ```
@@ -26,7 +27,7 @@ pip install -r requirements.txt
 cp .env.example .env
 open -e .env
 ```
-Paste your Telegram token and Gemini key into `.env` and save.
+Paste your Telegram token and Claude API key into `.env` and save.
 
 **4. Run it and get your owner alerts**
 ```
@@ -58,4 +59,4 @@ and what always goes to the owner. Edit it and restart the bot. Bookings are sav
 - Runs only while your laptop is on and `python bot.py` is running.
 - Chats are forgotten when you restart (bookings are kept).
 - Real UK customers won't use Telegram. This is the demo and the "brain"; later the customer side moves to SMS or WhatsApp.
-- If you hit Gemini's free limit you'll see an error message; wait a minute and try again.
+- If your Claude credit runs out, the bot replies with an error and sends you an alert.

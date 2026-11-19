@@ -2,7 +2,7 @@
 
 What it does:
   1. A "customer" messages the bot, e.g. "I've got wasps".
-  2. The AI (Google Gemini, free tier) asks what the pest is, where, the postcode,
+  2. The AI (Claude Haiku, via the Claude API) asks what the pest is, where, the postcode,
      a name and a phone number.
   3. It quotes ONLY from the price list in business.json.
   4. It offers free time slots and books one (saved in bookings.json).
@@ -17,13 +17,11 @@ import asyncio
 import json
 import logging
 import os
-import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+import anthropic
 from telegram import Update
 from telegram.constants import ChatAction
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
@@ -37,8 +35,8 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 log = logging.getLogger("hush")
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-haiku-5-5")  # fast and cheap
 OWNER_CHAT_ID = os.environ.get("OWNER_CHAT_ID", "").strip()  # your own Telegram chat id
 
 HERE = Path(__file__).parent
@@ -175,85 +173,111 @@ How to handle a chat:
 If anything is unclear or not covered here, use hand_to_owner and tell the customer the owner will be in touch shortly."""
 
 
-# ---------- one AI chat per Telegram chat ----------
+# ---------- one Claude conversation per Telegram chat ----------
 
-client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
-chats: dict[int, dict] = {}  # chat_id -> {"chat": gemini chat, "outbox": [...]}
+TOOLS = [
+    {
+        "name": "get_free_slots",
+        "description": "Get the free appointment slots for the next few working days. Offer the customer 2 or 3 of them.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "book_job",
+        "description": "Book the job once the customer has agreed a slot and the price.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "customer's name"},
+                "phone": {"type": "string", "description": "customer's phone number"},
+                "postcode": {"type": "string", "description": "full postcode of the property"},
+                "pest": {"type": "string", "description": "the pest, using the name from the price list"},
+                "where_in_property": {"type": "string", "description": "where the problem is, e.g. 'roof edge at the back'"},
+                "slot": {"type": "string", "description": "one slot exactly as returned by get_free_slots"},
+                "price": {"type": "string", "description": "the price quoted, exactly as on the price list"},
+                "urgent": {"type": "boolean", "description": "true if the job matches the urgent rules"},
+                "notes": {"type": "string", "description": "anything else useful: children, pets, allergies, access"},
+            },
+            "required": ["name", "phone", "postcode", "pest", "where_in_property", "slot", "price"],
+        },
+    },
+    {
+        "name": "hand_to_owner",
+        "description": ("Pass the enquiry to the owner instead of booking it. Use for anything in the "
+                        "'always hand to owner' list, anything you are unsure about, or if the customer asks for a person."),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "reason": {"type": "string", "description": "short reason, e.g. 'bed bugs need a survey'"},
+                "summary": {"type": "string", "description": "what the customer needs, in one or two sentences"},
+                "name": {"type": "string", "description": "customer's name if known"},
+                "phone": {"type": "string", "description": "customer's phone number if known"},
+                "urgent": {"type": "boolean", "description": "true if it matches the urgent rules"},
+            },
+            "required": ["reason", "summary"],
+        },
+    },
+]
 
-
-def new_chat(model: str, chat_id: int, outbox: list[str], history=None):
-    return client.chats.create(
-        model=model,
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt(),
-            tools=make_tools(chat_id, outbox),  # Gemini runs these Python functions itself
-            temperature=0.3,
-        ),
-        history=history or [],
-    )
+client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY, max_retries=4, timeout=60) if ANTHROPIC_API_KEY else None
+chats: dict[int, dict] = {}  # chat_id -> {"messages": [...], "outbox": [...], "tools": {...}}
 
 
 def get_chat(chat_id: int) -> dict:
     if chat_id not in chats:
         outbox: list[str] = []
-        chats[chat_id] = {"chat": new_chat(GEMINI_MODEL, chat_id, outbox), "outbox": outbox, "model": GEMINI_MODEL}
+        funcs = {f.__name__: f for f in make_tools(chat_id, outbox)}
+        chats[chat_id] = {"messages": [], "outbox": outbox, "tools": funcs, "system": system_prompt()}
     return chats[chat_id]
 
 
-_backup_models: list[str] | None = None
+def run_tool(session: dict, name: str, args: dict) -> tuple[str, bool]:
+    """Run one of our Python tools. Returns (result as JSON text, is_error)."""
+    func = session["tools"].get(name)
+    if func is None:
+        return f"Unknown tool {name}", True
+    try:
+        return json.dumps(func(**args)), False
+    except TypeError as e:  # missing or wrong arguments
+        return f"Error: {e}. Check the arguments and try again.", True
 
 
-def backup_models() -> list[str]:
-    """Other free 'flash' models on this key, used when the main one is overloaded."""
-    global _backup_models
-    if _backup_models is None:
-        found = []
-        try:
-            for m in client.models.list():
-                name = (m.name or "").removeprefix("models/")
-                actions = getattr(m, "supported_actions", None) or []
-                if ("flash" in name and name != GEMINI_MODEL and "image" not in name and "tts" not in name
-                        and "audio" not in name and "live" not in name
-                        and (not actions or "generateContent" in actions)):
-                    found.append(name)
-        except Exception:
-            log.exception("Could not list backup models")
-        # prefer stable, newest-looking names first
-        found.sort(key=lambda n: ("preview" in n or "exp" in n, "lite" in n, n), reverse=False)
-        _backup_models = found[:3]
-        log.info("Backup models if %s is busy: %s", GEMINI_MODEL, _backup_models or "none found")
-    return _backup_models
+async def ask_ai(chat_id: int, text: str) -> str:
+    """Send the customer's message to Claude, run any tools it asks for, return its reply."""
+    session = get_chat(chat_id)
+    messages = session["messages"]
+    start = len(messages)
+    messages.append({"role": "user", "content": text})
+    try:
+        return await _ask_loop(session, messages)
+    except BaseException:
+        del messages[start:]  # forget the half-finished turn so the next message starts clean
+        raise
 
 
-BUSY_CODES = ("503", "429", "500", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "INTERNAL", "overloaded", "high demand")
-
-
-def is_busy_error(e: Exception) -> bool:
-    text = f"{getattr(e, 'code', '')} {e}"
-    return any(c in text for c in BUSY_CODES)
-
-
-def ask_ai(chat_id: int, text: str):
-    """Send the message; if Google is busy, wait and retry, then try backup models."""
-    session = chats[chat_id]
-    attempts = [(session["model"], 0), (session["model"], 3)] + [(m, 0) for m in backup_models()]
-    last_error = None
-    for model, wait in attempts:
-        if wait:
-            time.sleep(wait)
-        if model != session["model"]:
-            log.warning("Switching this chat to backup model %s", model)
-            history = session["chat"].get_history()
-            session["chat"] = new_chat(model, chat_id, session["outbox"], history)
-            session["model"] = model
-        try:
-            return session["chat"].send_message(text)
-        except Exception as e:
-            if not is_busy_error(e):
-                raise
-            last_error = e
-            log.warning("%s is busy (%s), trying again", model, str(e)[:80])
-    raise last_error
+async def _ask_loop(session: dict, messages: list) -> str:
+    for _ in range(8):  # at most 8 tool rounds per message
+        response = await client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=2000,
+            system=session["system"],
+            tools=TOOLS,
+            messages=messages,
+        )
+        # keep Claude's whole reply (including any thinking) in the history, unchanged
+        messages.append({"role": "assistant", "content": response.content})
+        if response.stop_reason == "refusal":
+            return "Sorry, I can't help with that here. The owner will be in touch."
+        tool_calls = [b for b in response.content if b.type == "tool_use"]
+        if response.stop_reason != "tool_use" or not tool_calls:
+            reply = "\n".join(b.text for b in response.content if b.type == "text").strip()
+            return reply or "Sorry, could you say that again?"
+        results = []
+        for call in tool_calls:
+            log.info("Tool %s %s", call.name, call.input)
+            content, is_error = run_tool(session, call.name, dict(call.input))
+            results.append({"type": "tool_result", "tool_use_id": call.id, "content": content, "is_error": is_error})
+        messages.append({"role": "user", "content": results})
+    return "Sorry, I got a bit stuck there. The owner will get back to you shortly."
 
 
 async def tell_owner(app: Application, text: str) -> None:
@@ -311,17 +335,16 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     try:
         session = get_chat(chat_id)
         outbox = session["outbox"]
-        # the Gemini call is slow and not async, so run it in a thread, and give up after 90s
-        response = await asyncio.wait_for(asyncio.to_thread(ask_ai, chat_id, text), timeout=90)
-        reply = (response.text or "").strip()
-        if not reply:
-            log.warning("Gemini returned an empty reply: %r", response)
-            reply = "Sorry, could you say that again?"
+        reply = await asyncio.wait_for(ask_ai(chat_id, text), timeout=90)
     except asyncio.TimeoutError:
-        log.error("Gemini took longer than 90 seconds")
+        log.error("Claude took longer than 90 seconds")
         reply = "Sorry, that's taking a while. Could you send that again?"
-    except Exception as e:  # e.g. wrong model name, bad key, free-tier rate limit (429)
-        log.exception("Gemini error")
+    except anthropic.AuthenticationError:
+        log.error("Your ANTHROPIC_API_KEY is wrong. Check .env")
+        reply = "Sorry, I'm having trouble right now. The owner will get back to you shortly."
+        outbox.append("⚠️ Hush error: the Claude API key in .env is wrong.")
+    except Exception as e:  # e.g. no credit left, model name wrong, Claude overloaded
+        log.exception("Claude error")
         reply = "Sorry, I'm having trouble right now. The owner will get back to you shortly."
         outbox.append(f"⚠️ Hush error: {e.__class__.__name__}: {str(e)[:300]}")
     finally:
@@ -340,7 +363,7 @@ async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def main() -> None:
-    missing = [k for k, v in {"TELEGRAM_BOT_TOKEN": TELEGRAM_BOT_TOKEN, "GEMINI_API_KEY": GEMINI_API_KEY}.items() if not v]
+    missing = [k for k, v in {"TELEGRAM_BOT_TOKEN": TELEGRAM_BOT_TOKEN, "ANTHROPIC_API_KEY": ANTHROPIC_API_KEY}.items() if not v]
     if missing:
         raise SystemExit(f"Missing in .env: {', '.join(missing)} (see .env.example)")
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -349,7 +372,7 @@ def main() -> None:
     app.add_handler(CommandHandler("bookings", bookings_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
     app.add_error_handler(on_error)
-    log.info("Using AI model %s", GEMINI_MODEL)
+    log.info("Using Claude model %s", CLAUDE_MODEL)
     log.info("Hush is running. Open your bot in Telegram and send /start. Ctrl+C to stop.")
     app.run_polling()
 
