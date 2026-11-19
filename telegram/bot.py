@@ -228,21 +228,48 @@ async def bookings_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text("Latest bookings:\n" + "\n".join(lines))
 
 
+async def keep_typing(bot, chat_id: int) -> None:
+    """Show 'typing...' in Telegram until the reply is ready (it lasts 5s each time)."""
+    while True:
+        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+        await asyncio.sleep(4)
+
+
 async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
-    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-    session = get_chat(chat_id)
+    text = update.message.text
+    log.info("Message from %s: %s", chat_id, text)
+    typing = asyncio.create_task(keep_typing(context.bot, chat_id))
+    outbox: list[str] = []
     try:
-        # the Gemini call is slow and not async, so run it in a thread
-        response = await asyncio.to_thread(session["chat"].send_message, update.message.text)
-        reply = (response.text or "").strip() or "Sorry, could you say that again?"
-    except Exception as e:  # e.g. free-tier rate limit (429)
+        session = get_chat(chat_id)
+        outbox = session["outbox"]
+        # the Gemini call is slow and not async, so run it in a thread, and give up after 60s
+        response = await asyncio.wait_for(asyncio.to_thread(session["chat"].send_message, text), timeout=60)
+        reply = (response.text or "").strip()
+        if not reply:
+            log.warning("Gemini returned an empty reply: %r", response)
+            reply = "Sorry, could you say that again?"
+    except asyncio.TimeoutError:
+        log.error("Gemini took longer than 60 seconds")
+        reply = "Sorry, that's taking a while. Could you send that again?"
+    except Exception as e:  # e.g. wrong model name, bad key, free-tier rate limit (429)
         log.exception("Gemini error")
         reply = "Sorry, I'm having trouble right now. The owner will get back to you shortly."
-        session["outbox"].append(f"⚠️ Hush error in a chat, please check it: {e.__class__.__name__}")
+        outbox.append(f"⚠️ Hush error: {e.__class__.__name__}: {str(e)[:300]}")
+    finally:
+        typing.cancel()
+    log.info("Reply to %s: %s", chat_id, reply)
     await update.message.reply_text(reply)
-    while session["outbox"]:
-        await tell_owner(context.application, session["outbox"].pop(0))
+    while outbox:
+        try:
+            await tell_owner(context.application, outbox.pop(0))
+        except Exception:
+            log.exception("Could not send the owner alert")
+
+
+async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    log.error("Something went wrong", exc_info=context.error)
 
 
 def main() -> None:
@@ -254,6 +281,8 @@ def main() -> None:
     app.add_handler(CommandHandler("reset", reset))
     app.add_handler(CommandHandler("bookings", bookings_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
+    app.add_error_handler(on_error)
+    log.info("Using AI model %s", GEMINI_MODEL)
     log.info("Hush is running. Open your bot in Telegram and send /start. Ctrl+C to stop.")
     app.run_polling()
 
