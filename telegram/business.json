@@ -1,0 +1,21 @@
+{
+  "company_name": "Northvale Pest Control",
+  "technician": "Dan",
+  "areas_covered": "Greater Manchester (M, OL, SK, BL and WN postcodes)",
+  "postcode_prefixes": ["M", "OL", "SK", "BL", "WN"],
+  "opening_hours": "Monday to Saturday, 8am to 6pm",
+  "working_days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  "time_slots": ["08:00-10:00", "10:00-12:00", "14:00-16:00", "16:00-18:00"],
+  "days_ahead": 4,
+  "prices": [
+    {"pest": "wasp nest", "price": "£95", "notes": "per nest; extra nests at the same visit £40 each"},
+    {"pest": "rats", "price": "£165", "notes": "3 visits over about 3 weeks"},
+    {"pest": "mice", "price": "£145", "notes": "3 visits over about 3 weeks"},
+    {"pest": "fleas", "price": "£120", "notes": "whole house spray, 1 visit; pets need treating by the owner too"},
+    {"pest": "ants", "price": "£85", "notes": "1 visit"},
+    {"pest": "cockroaches", "price": "£150", "notes": "2 visits"},
+    {"pest": "moles", "price": "£110", "notes": "traps set and collected, 2 visits"}
+  ],
+  "always_hand_to_owner": "bed bugs (need a survey first), squirrels, birds or bird proofing, foxes, any commercial or food business, landlords with several properties, anything not on the price list, anyone who asks to speak to a person, complaints",
+  "urgent_means": "wasps inside the living space, anyone allergic to stings, rats or mice in a kitchen with a baby or vulnerable person, or a business that can't open"
+}
