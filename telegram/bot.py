@@ -34,7 +34,7 @@ log = logging.getLogger("hush")
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 OWNER_CHAT_ID = os.environ.get("OWNER_CHAT_ID", "").strip()  # your own Telegram chat id
 
 HERE = Path(__file__).parent
@@ -193,8 +193,9 @@ def get_chat(chat_id: int) -> dict:
 
 
 async def tell_owner(app: Application, text: str) -> None:
-    if not OWNER_CHAT_ID:
-        log.warning("OWNER_CHAT_ID not set, owner message not sent:\n%s", text)
+    if not OWNER_CHAT_ID.lstrip("-").isdigit():
+        log.warning("OWNER_CHAT_ID must be your chat id NUMBER (not the bot's name). "
+                    "Send /start and copy the number shown here. Owner message not sent:\n%s", text)
         return
     await app.bot.send_message(chat_id=int(OWNER_CHAT_ID), text=text)
 
